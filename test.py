@@ -80,6 +80,9 @@ class ScrollPane:
         fmt = curses.A_REVERSE
       d.render(self.window, i, 2, self.width, fmt)
       
+    #scrollheight = max(1, int(round(self.height / len(self.data))))
+    #self.window.addstr(int(round(self.height * (self.topvisible / len(self.data)))), self.width-1, 'O')
+      
     self.window.noutrefresh()
     
   def setTopVisible(self, topvisible):
@@ -137,9 +140,9 @@ class Window:
     elif event == curses.KEY_RESIZE:
       (self.h, self.w) = self.screen.getmaxyx()
       self.resize()
-    elif event == 21:
+    elif event == curses.KEY_PPAGE or event == 21:
       self.leftscroll.setSelected(self.leftscroll.selected - 10)
-    elif event == 4:
+    elif event == curses.KEY_NPAGE or event == 4:
       self.leftscroll.setSelected(self.leftscroll.selected + 10)
     
     if event != -1: self.lastevent = event
@@ -147,22 +150,10 @@ class Window:
     self.screen.erase()
     self.screen.vline(0, int(self.windowratio*self.w), '|', self.h)
     self.screen.noutrefresh()
-
-
-
+    
     self.leftscroll.setData([DataLine([{'str': 'My Precious ' + str(x)}, {'str': ' Amazing', 'fmt':  curses.color_pair(COLOR_NORMAL)}]) for x in range(0,100)])
 
     self.leftscroll.render()
-    #self.leftwin.erase()
-    #for i in range(1,10):
-    #  self.leftwin.addstr(i, 2, 'hello ' + str(i))
-    #self.leftwin.noutrefresh()
-    
-    #self.rightwin.erase()
-    #self.rightwin.addstr(i, 2, 'Size: ' + str(self.w) + ', ' + str(self.h))
-    #for i in range(1,10):
-    #  self.rightwin.addstr(i, 2, 'goodbye ' + str(i))
-    #self.rightwin.noutrefresh()
     
     
     curses.doupdate()
