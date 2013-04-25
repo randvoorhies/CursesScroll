@@ -1,4 +1,8 @@
-import time, curses
+import curses
+
+COLOR_NORMAL   = 1
+COLOR_FINISHED = 2
+COLOR_FAILED   = 3
 
 class curses_screen:
   def __enter__(self):
@@ -8,6 +12,9 @@ class curses_screen:
     curses.noecho()
     curses.curs_set(0)
     self.stdscr.keypad(1)
+    curses.init_pair(COLOR_NORMAL, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(COLOR_FINISHED, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(COLOR_FAILED, curses.COLOR_RED, curses.COLOR_BLACK)
     return self.stdscr
   
   def __exit__(self,a,b,c):
@@ -22,7 +29,24 @@ def debug(stdscr):
     curses.echo()
     curses.endwin()
     import pdb; pdb.set_trace()
+
+######################################################################
+class DataLine:
+  def __init__(self, data = {}):
+    self.data = data
   
+  def render(self, window, y, x, maxx, fmt):
+    if x > maxx: return
+    
+    currx = x
+    for d in self.data:
+      currfmt = fmt
+      if d.has_key('fmt'): currfmt |= d['fmt']
+      window.addstr(y, currx, d['str'][0:max(0,maxx-currx-1)], currfmt)
+      currx += len(d['str'])
+      if currx >= maxx: return
+  
+######################################################################
 class ScrollPane:
   def __init__(self, parent, height, width, y, x):
     self.parent = parent
@@ -43,6 +67,7 @@ class ScrollPane:
     self.window.mvwin(y, x)
     
   def setData(self, data):
+    """ Set the data to be displayed. Data should be a list of dictionaries with keys 'string' and an optional key 'format' """
     self.data = data
   
   def render(self):
@@ -51,10 +76,10 @@ class ScrollPane:
     
     for i, d in enumerate(self.data[self.topvisible:self.topvisible+self.height]):
       fmt = curses.A_NORMAL
-      
       if i+self.topvisible == self.selected:
         fmt = curses.A_REVERSE
-      self.window.addstr(i, 2, d[0], fmt | d[1])
+      d.render(self.window, i, 2, self.width, fmt)
+      
     self.window.noutrefresh()
     
   def setTopVisible(self, topvisible):
@@ -66,7 +91,7 @@ class ScrollPane:
       self.setTopVisible(self.selected)
     elif self.selected > self.topvisible+self.height-1:
       self.setTopVisible(self.selected-self.height+1)
-  
+
 class Window:
   def __init__(self, screen):
     self.screen = screen
@@ -123,7 +148,9 @@ class Window:
     self.screen.vline(0, int(self.windowratio*self.w), '|', self.h)
     self.screen.noutrefresh()
 
-    self.leftscroll.setData([('hello ' + str(x), curses.A_NORMAL) for x in range(0, 100)])
+
+
+    self.leftscroll.setData([DataLine([{'str': 'My Precious ' + str(x)}, {'str': ' Amazing', 'fmt':  curses.color_pair(COLOR_NORMAL)}]) for x in range(0,100)])
 
     self.leftscroll.render()
     #self.leftwin.erase()
