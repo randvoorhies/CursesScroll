@@ -5,6 +5,7 @@ COLOR_FINISHED = 2
 COLOR_FAILED   = 3
 
 class curses_screen:
+  # -------------------------
   def __enter__(self):
     self.stdscr = curses.initscr()
     curses.start_color()
@@ -17,12 +18,14 @@ class curses_screen:
     curses.init_pair(COLOR_FAILED, curses.COLOR_RED, curses.COLOR_BLACK)
     return self.stdscr
   
+  # -------------------------
   def __exit__(self,a,b,c):
     curses.nocbreak()
     self.stdscr.keypad(0)
     curses.echo()
     curses.endwin()
 
+# -------------------------
 def debug(stdscr):
     curses.nocbreak()
     stdscr.keypad(0)
@@ -32,9 +35,11 @@ def debug(stdscr):
 
 ######################################################################
 class DataLine:
+  # -------------------------
   def __init__(self, data = {}):
     self.data = data
   
+  # -------------------------
   def render(self, window, y, x, maxx, fmt):
     if x > maxx: return
     
@@ -48,6 +53,7 @@ class DataLine:
   
 ######################################################################
 class ScrollPane:
+  # -------------------------
   def __init__(self, parent, height, width, y, x):
     self.parent = parent
     self.window = parent.subwin(height, width, y, x)
@@ -56,20 +62,24 @@ class ScrollPane:
     self.height = height
     self.width  = width
     
+  # -------------------------
   def resize(self, height, width):
     if height < 2: return
     self.window.resize(height, width)
     self.height = height
     self.width  = width
   
+  # -------------------------
   def move(self, y, x):
     if self.height < 3: return
     self.window.mvwin(y, x)
     
+  # -------------------------
   def setData(self, data):
     """ Set the data to be displayed. Data should be a list of dictionaries with keys 'string' and an optional key 'format' """
     self.data = data
   
+  # -------------------------
   def render(self):
     if self.height < 3: return
     self.window.erase()
@@ -80,14 +90,19 @@ class ScrollPane:
         fmt = curses.A_REVERSE
       d.render(self.window, i, 2, self.width, fmt)
       
-    #scrollheight = max(1, int(round(self.height / len(self.data))))
-    #self.window.addstr(int(round(self.height * (self.topvisible / len(self.data)))), self.width-1, 'O')
+    scrollbartop    = int(float(self.topvisible) / len(self.data) * self.height)
+    scrollbarbottom = int(float(self.topvisible+self.height) / len(self.data) * self.height)-1
+    
+    for i in range(scrollbartop,scrollbarbottom):
+      self.window.addstr(i, self.width-1, 'O')
       
     self.window.noutrefresh()
     
+  # -------------------------
   def setTopVisible(self, topvisible):
     self.topvisible = min(len(self.data), max(0, topvisible))
     
+  # -------------------------
   def setSelected(self, selected):
     self.selected = min(len(self.data), max(0, selected))
     if self.selected < self.topvisible:
@@ -96,6 +111,7 @@ class ScrollPane:
       self.setTopVisible(self.selected-self.height+1)
 
 class Window:
+  # -------------------------
   def __init__(self, screen):
     self.screen = screen
     self.windowratio = 0.25
@@ -116,6 +132,7 @@ class Window:
     self.screen.timeout(10)
     self.lastevent = 0
     
+  # -------------------------
   def resize(self):
     left_startx = 1
     left_starty = 1
@@ -131,6 +148,7 @@ class Window:
     #self.rightwin.resize(right_height, right_width)
     #self.rightwin.mvwin(right_starty, right_startx)
     
+  # -------------------------
   def render(self):
     event = self.screen.getch()
     if event == curses.KEY_UP or event == ord('k'):
